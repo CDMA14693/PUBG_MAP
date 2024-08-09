@@ -152,19 +152,32 @@ bool HookHandler::RemoveRegisterKeyboard(std::vector<KeyboardRegister>::iterator
 }
 
 
-void HookHandler::compareKeyList(const std::vector<int>& b,LPARAM lparm)
+void HookHandler::compareKeyList(const std::vector<int>& b, LPARAM lparm)
 {
     if (!keyRegisters.empty() && !b.empty()) {
-        for (auto& registerInfo : keyRegisters) {
-            for (auto& binding : registerInfo.keyBindings) {
-                if (binding.second.size() == b.size()) {
+        for (const auto& registerInfo : keyRegisters) {
+            for (const auto& binding : registerInfo.keyBindings) {
+                // 只考虑大小相等的队列
+                if (binding.second.size() <= b.size()&& binding.second.size()>0) {
                     bool isMatch = true;
-                    for (size_t i = 0; i < binding.second.size(); i++) {
-                        if (binding.second[i] != b[i]) {
-                            isMatch = false;
-                            break; // 如果不匹配，退出当前比较
+                    size_t matchStartIndex = 0;
+
+                    // 遍历队列，检查是否能找到匹配
+                    for (size_t i = 0; i <= b.size() - binding.second.size(); ++i) {
+                        isMatch = true;
+                        for (size_t j = 0; j < binding.second.size(); ++j) {
+                            if (binding.second[j] != b[i + j]) {
+                                isMatch = false;
+                                break;
+                            }
+                        }
+                        if (isMatch) {
+                            matchStartIndex = i;
+                            break;
                         }
                     }
+
+                    // 如果找到匹配，执行回调
                     if (isMatch) {
                         registerInfo.callback(binding.first, lparm);
                     }
