@@ -2,28 +2,23 @@
 #include "HookHandler.h"
 #include "MainWindow.h"
 
+
 //快捷键 功能启动标记说明
 //鼠标功能  
-std::vector<POINT>* HookHandler::MainWindowPoint = &MainWindow::GetPoint();
-std::map<std::string, std::vector<int>> HookHandler::QuickKey;
-static BOOL upMainWindow;
-static std::vector<int>  KeyValue;
+/*
+ 鼠标消息定义 int
+    鼠标滚轮上 0x1000
+    鼠标滚轮下 0x1001
 
-BOOL HookHandler::GetUpdateDraw()
-{
-    return upMainWindow;
+ 鼠标左键 
+*/
+
+
+std::vector<KeyboardRegister> HookHandler::keyRegisters;
+
+HookHandler::HookHandler() {
+
 }
-
-void HookHandler::SetUpdateDraw(BOOL flag)
-{
-    upMainWindow = flag;
-}
-
-HookHandler::HookHandler()
-{
-    upMainWindow = false;
-}
-
 
 HookHandler& HookHandler::GetHookHandler()
 {
@@ -33,78 +28,69 @@ HookHandler& HookHandler::GetHookHandler()
 
 LRESULT HookHandler::ALLMessageProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
-    
-    if (nCode >= 0) {
-        if (wParam==WM_KEYDOWN)
+
+    static std::vector<int>  pressedKeys;
+    static LPARAM temp;
+    if (nCode >= 0&&!keyRegisters.empty()) {
+        switch (wParam)
+        {
+        case WM_KEYDOWN:
         {
             KBDLLHOOKSTRUCT* keycode = (KBDLLHOOKSTRUCT*)lParam;
-            if (KeyValue.empty())
+            if (pressedKeys.empty())
             {
-                KeyValue.push_back(keycode->vkCode);
+                pressedKeys.push_back(keycode->vkCode);
             }
-            else if (KeyValue.back()!= keycode->vkCode)
+            else if (pressedKeys.back() != keycode->vkCode)
             {
-                KeyValue.push_back(keycode->vkCode);
-            }            
-        }
-        else if (wParam == WM_LBUTTONDOWN )
-        {
-            MSLLHOOKSTRUCT* mouseCode = (MSLLHOOKSTRUCT*)lParam;
-            if ((!KeyValue.empty())&& !QuickKey.empty()&&!MainWindowPoint->empty())
-            {
-                if (KeyValue == QuickKey["标记点1"])
-                {
-                    MainWindowPoint->at(0) = mouseCode->pt;
-                }
-                else if (KeyValue == QuickKey["标记点2"]) 
-                {
-                    MainWindowPoint->at(1) = mouseCode->pt;
-                }
-                upMainWindow = true;
+                pressedKeys.push_back(keycode->vkCode);
             }
-            
+            break;
         }
-        //按键抬起后的 组合键处理
-        else if (wParam== WM_KEYUP)
+        case WM_LBUTTONDOWN:
         {
-            
-            
+            pressedKeys.push_back(0x01);
+            compareKeyList(pressedKeys, lParam);
+            removeKey(pressedKeys, 0x01);
+            break;
+        }
+        case WM_RBUTTONDOWN:
+        {
+            pressedKeys.push_back(0x02);
+            compareKeyList(pressedKeys, lParam);
+            removeKey(pressedKeys, 0x02);
+            break;
+        }
+        case WM_MOUSEWHEEL:
+        {
+            MSLLHOOKSTRUCT* s=(MSLLHOOKSTRUCT*)lParam;
+            int x = GET_WHEEL_DELTA_WPARAM(s->mouseData) / WHEEL_DELTA;
+            if (x>0)
+            {
+                pressedKeys.push_back(0x1000);
+            }
+            else if (x < 0)
+            {
 
-
+                pressedKeys.push_back(0x1001);
+                
+            }
+            compareKeyList(pressedKeys, lParam);
+            removeKey(pressedKeys, 0x1000);
+            removeKey(pressedKeys, 0x1001);
+            break;
+        }
+        case WM_KEYUP:
+        {
             KBDLLHOOKSTRUCT* keycode = (KBDLLHOOKSTRUCT*)lParam;
-            if (isKey(QuickKey["渲染标记点"], KeyValue))
-            {
-                MainWindow::DrawPoint = !MainWindow::DrawPoint;
-            }
-            else if (isKey(KeyValue,QuickKey["标记中心点1"]))
-            {
-
-                std::cout << "标记中心点1"<<std::endl;
-                std::cout << "宽" << MainWindow::WindowSize.right;
-                std::cout << "高" << MainWindow::WindowSize.bottom;
-                MainWindowPoint->at(0).x = MainWindow::WindowSize.right / 2;
-                MainWindowPoint->at(0).y = MainWindow::WindowSize.bottom / 2;
-            }
-            else if (isKey(KeyValue, QuickKey["标记中心点2"]))
-            {
-                MainWindowPoint->at(1).x = MainWindow::WindowSize.right / 2;
-                MainWindowPoint->at(1).y = MainWindow::WindowSize.bottom / 2;
-            }
-            else if (isKey(KeyValue , QuickKey["增加基准值"]))
-            {
-                MainWindow::POINT_100M += 5;
-            }
-            else if (KeyValue == QuickKey["减少基准值"])
-            {
-                MainWindow::POINT_100M -= 5;
-            }
-
-            //删除抬起键值
-            removeKeyValue(KeyValue, keycode->vkCode);
-
-            //设置画面开始更新
-            upMainWindow = true;
+            compareKeyList(pressedKeys, lParam);
+            removeKey(pressedKeys, keycode->vkCode);
+            break;
         }
+        default:
+            break;
+        }
+
     }
     return CallNextHookEx(NULL, nCode, wParam, lParam);
 }
@@ -126,10 +112,11 @@ bool HookHandler::installHook(HOOKPROC proc)
         UnhookWindowsHookEx(MouseHook);
         return false;
     }
+    std::cout << "钩子安装成功" << std::endl;
     return true;
 }
 
-void HookHandler::UnistallHook()
+void HookHandler::UnistallHook() const
 {
     if (MouseHook!=nullptr)
     {
@@ -142,7 +129,52 @@ void HookHandler::UnistallHook()
 }
 
 
-void HookHandler::removeKeyValue(std::vector<int>& keyValue, int valueToRemove)
+
+std::vector<KeyboardRegister>::iterator HookHandler::RegisterKeyboard(std::function<void(int,LPARAM)> callback, std::map<int, std::vector<int>> key) {
+    static int id = 0;
+    KeyboardRegister KeyRegister;
+    KeyRegister.callback = callback;
+    KeyRegister.keyBindings = key;
+    KeyRegister.id = id++;
+
+    return keyRegisters.insert(keyRegisters.end(), KeyRegister);
+}
+
+bool HookHandler::RemoveRegisterKeyboard(std::vector<KeyboardRegister>::iterator it)
+{
+    if (it == keyRegisters.end()) {
+        // 迭代器无效，返回 false
+        return false;
+    }
+
+    keyRegisters.erase(it);
+    return true;
+}
+
+
+void HookHandler::compareKeyList(const std::vector<int>& b,LPARAM lparm)
+{
+    if (!keyRegisters.empty() && !b.empty()) {
+        for (auto& registerInfo : keyRegisters) {
+            for (auto& binding : registerInfo.keyBindings) {
+                if (binding.second.size() == b.size()) {
+                    bool isMatch = true;
+                    for (size_t i = 0; i < binding.second.size(); i++) {
+                        if (binding.second[i] != b[i]) {
+                            isMatch = false;
+                            break; // 如果不匹配，退出当前比较
+                        }
+                    }
+                    if (isMatch) {
+                        registerInfo.callback(binding.first, lparm);
+                    }
+                }
+            }
+        }
+    }
+}
+
+void HookHandler::removeKey(std::vector<int>& keyValue, int valueToRemove)
 {
 
     // 使用 std::remove 将所有 valueToRemove 移到序列末尾，并返回新末尾的迭代器
@@ -150,44 +182,5 @@ void HookHandler::removeKeyValue(std::vector<int>& keyValue, int valueToRemove)
 
     // 使用 erase 删除从 newEnd 到 end 的所有元素
     keyValue.erase(newEnd, keyValue.end());
-}
-
-BOOL HookHandler::isKey(std::vector<int>& a, std::vector<int>& b)
-{
-    if (!a.empty() && (a.size()==b.size()))
-    {
-        for (size_t i = 0; i < a.size(); i++)
-        {
-            if (a.at(i) != b.at(i))
-            {
-                return false;
-            }
-            
-        }
-        return true;
-    }
-
-    return false;
-}
-
-std::vector<int> HookHandler::GetNowKey()
-{
-    return KeyValue;
-}
-
-const std::map<std::string, std::vector<int>> HookHandler::GetQuickKey()
-{
-    return QuickKey;
-}
-
-BOOL HookHandler::SetQuickKey(std::map<std::string, std::vector<int>>& tempQuickKey)
-{
-    std::cout << "设置快捷键" << std::endl;
-    if (!tempQuickKey.empty())
-    {
-        QuickKey = tempQuickKey;
-        return true;
-    }
-    return false;
 }
 

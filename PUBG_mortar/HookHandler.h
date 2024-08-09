@@ -1,9 +1,11 @@
 #pragma once
-struct QuickKeyMod
-{
-	std::string function;
-	std::vector<int> KeyValueList;
-};
+
+//struct KeyboardRegister {
+//	int id;
+//	std::function<void(int,LPARAM)> callback;
+//	std::map<int, std::vector<int>>  keyBindings;
+//};
+
 
 class HookHandler
 {
@@ -13,30 +15,24 @@ public:
 	static LRESULT CALLBACK ALLMessageProc(int nCode, WPARAM wParam, LPARAM lParam);
 
 	bool installHook(HOOKPROC proc = ALLMessageProc);
-	void UnistallHook();
-	
-	void updataKey(std::string&);
+	void UnistallHook() const;
+	//注册快捷键 以及处理快捷键函数 
+	std::vector<KeyboardRegister>::iterator RegisterKeyboard(std::function<void(int,LPARAM)>, std::map<int, std::vector<int>>);
 
-	//
-	static void removeKeyValue(std::vector<int>& keyValue, int valueToRemove);
-	static BOOL isKey(std::vector<int>&, std::vector<int>&);
-	static std::vector<int> GetNowKey();
-	//获取快捷键组合
-	static const std::map<std::string, std::vector<int>> GetQuickKey();
-	static std::map<std::string, std::vector<int>> QuickKey;
-	//设置快捷键组合
-	BOOL SetQuickKey(std::map<std::string, std::vector<int>>&);
-	HookHandler(const HookHandler&) = delete;
-	HookHandler& operator=(HookHandler&) = delete;
+	bool RemoveRegisterKeyboard(std::vector<KeyboardRegister>::iterator it);
 
-	//这是零时搭建用于更新画面的函数，程序主循环会检测它
-	BOOL GetUpdateDraw();
-	void SetUpdateDraw(BOOL);
+
 private:
 	HookHandler();
 	HHOOK MouseHook=nullptr;
 	HHOOK KeyboardHook=nullptr;
-	static std::vector<POINT>* MainWindowPoint;
+
+	//当前按键列表
+	static std::vector<KeyboardRegister> keyRegisters;
 
 	
+	//比较按键值
+	static void compareKeyList(const std::vector<int>& b,LPARAM lparm);
+	//删除当前抬起的 按键  
+	static void removeKey(std::vector<int>& keyValue, int valueToRemove);
 };

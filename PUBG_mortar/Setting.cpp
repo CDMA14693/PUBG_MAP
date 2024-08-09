@@ -15,7 +15,7 @@ IMPLEMENT_DYNAMIC(Setting, CDialogEx)
 Setting::Setting(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_DIALOG1, pParent)
 {
-	hook = &(HookHandler::GetHookHandler());
+
 }
 
 Setting::~Setting()
@@ -27,25 +27,51 @@ void Setting::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 
 	//输入框绑定
-	DDX_Control(pDX, IDC_EDIT1, M100_EDIT);
 	//快捷键绑定系统
 	DDX_Control(pDX, IDC_HOTKEY1, HOTKEY1);
 	DDX_Control(pDX, IDC_HOTKEY2, HOTKEY2);
 	DDX_Control(pDX, IDC_HOTKEY3, HOTKEY3);
-	DDX_Control(pDX, IDC_HOTKEY5, HOTKEY4);
-	DDX_Control(pDX, IDC_HOTKEY6, HOTKEY5);
-	DDX_Control(pDX, IDC_HOTKEY7, HOTKEY6);
-	DDX_Control(pDX, IDC_HOTKEY8, HOTKEY7);
+	DDX_Control(pDX, IDC_HOTKEY4, HOTKEY4);
+	DDX_Control(pDX, IDC_HOTKEY5, HOTKEY5);
+	DDX_Control(pDX, IDC_HOTKEY6, HOTKEY6);
+	DDX_Control(pDX, IDC_HOTKEY7, HOTKEY7);
+	DDX_Control(pDX, IDC_HOTKEY8, HOTKEY8);
+	DDX_Control(pDX, IDC_COMBO1, CComboBox_List);
+
+	DDX_Control(pDX, IDC_EDIT1, EDIT);
+	DDX_Control(pDX, IDC_EDIT2, EDIT2);
 	//设置快捷键显示
-	SetKeyShow(HOTKEY1, HookHandler::QuickKey["渲染标记点"]);
-	SetKeyShow(HOTKEY2, HookHandler::QuickKey["标记点1"]);
-	SetKeyShow(HOTKEY3, HookHandler::QuickKey["标记点2"]);
-	SetKeyShow(HOTKEY4, HookHandler::QuickKey["增加基准值"]);
-	SetKeyShow(HOTKEY5, HookHandler::QuickKey["减少基准值"]);
-	SetKeyShow(HOTKEY6, HookHandler::QuickKey["标记中心点1"]);
-	SetKeyShow(HOTKEY7, HookHandler::QuickKey["标记中心点2"]);
-	//设置基准值显示
-	M100_EDIT.SetWindowTextW(std::to_wstring(MainWindow::POINT_100M).c_str());
+	if (info != NULL)
+	{
+		SetKeyShow(HOTKEY1, info->QuickKey[1]);
+		std::vector<int>list = info->QuickKey[2];
+		list.pop_back();
+		SetKeyShow(HOTKEY2, list);
+		list = info->QuickKey[3];
+		list.pop_back();
+		SetKeyShow(HOTKEY3, list);
+		SetKeyShow(HOTKEY4, info->QuickKey[4]);
+		SetKeyShow(HOTKEY5, info->QuickKey[5]);
+		SetKeyShow(HOTKEY6, info->QuickKey[6]);
+		SetKeyShow(HOTKEY7, info->QuickKey[7]);
+		SetKeyShow(HOTKEY8, info->QuickKey[8]);
+
+		for (int x = 0; x<info->POINT_100M.size(); x++)
+		{
+			if (x == 0)
+				CComboBox_List.SetCurSel(0);
+			std::wstring str = L"放大";
+			str += std::to_wstring(x);
+			str += L"次";
+			CComboBox_List.AddString(str.c_str());
+		}
+		
+		EDIT2.SetWindowTextW(std::to_wstring(info->PointSize).c_str());
+
+	}
+
+
+	
 }
 
 
@@ -53,7 +79,10 @@ void Setting::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(Setting, CDialogEx)
 	ON_BN_CLICKED(IDOK, &Setting::OnBnClickedOk)
 
-	ON_EN_CHANGE(IDC_EDIT1, &Setting::OnEnChangeEdit1)
+	ON_CBN_SELCHANGE(IDC_COMBO1, &Setting::OnCbnSelchangeCombo1)
+	ON_EN_KILLFOCUS(IDC_EDIT1, &Setting::OnEnKillfocusEdit1)
+	ON_BN_CLICKED(IDC_BUTTON1, &Setting::OnBnClickedButton1)
+	ON_BN_CLICKED(IDC_BUTTON2, &Setting::OnBnClickedButton2)
 END_MESSAGE_MAP()
 
 
@@ -62,10 +91,24 @@ END_MESSAGE_MAP()
 
 void Setting::OnBnClickedOk()
 {
-	SetKeyQuick();
+	if (info!=nullptr)
+	{
+		SetKeyQuick();
+		CString str;
+		EDIT2.GetWindowTextW(str);
+		info->PointSize = _ttoi(str);
+		MainWindow::SaveConfigurationBinary("1");
+	}
+	
+}
 
-
-
+void Setting::Setinfo(MainWindowInfo &showinfo)
+{
+	info = &showinfo;
+	if (info->QuickKey.empty())
+	{
+		return;
+	}
 }
 
 //设置窗口快捷键显示
@@ -107,21 +150,18 @@ bool Setting::SetKeyShow(CHotKeyCtrl& HOYKEY, std::vector<int>& keyvalue)
 //将窗口快捷键设置给快捷键处理程序
 bool Setting::SetKeyQuick()
 {
-
-	HookHandler::QuickKey["渲染标记点"] = GetkeyList(HOTKEY1);
-	HookHandler::QuickKey["标记点1"] = GetkeyList(HOTKEY2);
-	HookHandler::QuickKey["标记点2"] = GetkeyList(HOTKEY3);
-	HookHandler::QuickKey["增加基准值"] = GetkeyList(HOTKEY4);
-	HookHandler::QuickKey["减少基准值"] = GetkeyList(HOTKEY5);
-	HookHandler::QuickKey["标记中心点1"] = GetkeyList(HOTKEY6);
-	HookHandler::QuickKey["标记中心点2"] = GetkeyList(HOTKEY7);
-
-	CString str;
-	M100_EDIT.GetWindowTextW(str);
-	if(_ttoi(str)>0)
-		MainWindow::POINT_100M = _ttoi(str);
-	hook->SetUpdateDraw(true);
-
+	info->QuickKey[1] = GetkeyList(HOTKEY1);
+	std::vector<int> list = GetkeyList(HOTKEY2);
+	list.push_back(0x01);
+	info->QuickKey[2] = list;
+	list =  GetkeyList(HOTKEY3);
+	list.push_back(0x01);
+	info->QuickKey[3] = list;
+	info->QuickKey[4] = GetkeyList(HOTKEY4);
+	info->QuickKey[5] = GetkeyList(HOTKEY5);
+	info->QuickKey[6] = GetkeyList(HOTKEY6);
+	info->QuickKey[7] = GetkeyList(HOTKEY7);
+	info->QuickKey[8] = GetkeyList(HOTKEY8);
 
 	return false;
 }
@@ -144,15 +184,52 @@ std::vector<int> Setting::GetkeyList(CHotKeyCtrl& HOTKEY)
 	return key;
 }
 
-
-
-void Setting::OnEnChangeEdit1()
+void Setting::OnCbnSelchangeCombo1()
 {
-	// TODO:  如果该控件是 RICHEDIT 控件，它将不
-	// 发送此通知，除非重写 CDialogEx::OnInitDialog()
-	// 函数并调用 CRichEditCtrl().SetEventMask()，
-	// 同时将 ENM_CHANGE 标志“或”运算到掩码中。
-
-	// TODO:  在此添加控件通知处理程序代码
+	// TODO: 在此添加控件通知处理程序代码
+	int nSel = CComboBox_List.GetCurSel();
+	std::cout << nSel << std::endl;
 	
+	EDIT.SetWindowTextW(std::to_wstring(info->POINT_100M[nSel]).c_str());
+}
+
+void Setting::OnEnKillfocusEdit1()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	
+	if (info->POINT_100M.size()==0||CComboBox_List.GetCurSel()== CB_ERR)
+	{
+		return;
+	}
+	CString str;
+	EDIT.GetWindowTextW(str);
+	info->POINT_100M[CComboBox_List.GetCurSel()] = _ttoi(str);
+}
+
+void Setting::OnBnClickedButton1()
+{
+	info->POINT_100M.push_back(0);
+	std::wstring str = L"放大";
+	str += std::to_wstring(info->POINT_100M.size() - 1);
+	str += L"次";
+	CComboBox_List.AddString(str.c_str());
+	// TODO: 在此添加控件通知处理程序代码
+}
+
+void Setting::OnBnClickedButton2()
+{
+
+	int itemCount = CComboBox_List.GetCount(); // 获取组合框中的项数
+
+	if (itemCount!=0)
+	{
+		CComboBox_List.DeleteString(itemCount - 1);
+		CComboBox_List.SetCurSel(itemCount - 2);
+		info->POINT_100M.pop_back();
+		if (itemCount>1)
+		{
+			OnCbnSelchangeCombo1();
+		}
+		
+	}
 }

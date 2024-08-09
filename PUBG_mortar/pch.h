@@ -8,8 +8,10 @@
 #include <math.h>
 #include <vector>
 #include <map>
+#include <unordered_set>
 #include <fstream>
-#include <nlohmann/json.hpp>
+#include <functional>
+
 
 //
 #include"resource.h"
@@ -23,3 +25,18 @@
 #include <afxdialogex.h>
 
 
+struct MainWindowInfo
+{
+	std::vector<int> POINT_100M;
+	std::map<int, std::vector<int>> QuickKey;
+	RECT BackGround;
+	int PointSize;
+
+	MainWindowInfo() : PointSize(10) { BackGround = { 0,0,100,100 }; }
+};
+
+struct KeyboardRegister {
+	int id;
+	std::function<void(int, LPARAM)> callback;
+	std::map<int, std::vector<int>>  keyBindings;
+};

@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "afxdialogex.h"
-#include "HookHandler.h"
+#include "MainWindow.h"
 
 // Setting 对话框
 
@@ -23,9 +23,9 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnBnClickedOk();
-	CHotKeyCtrl HOTKEY1;
+	
 
-
+	void Setinfo(MainWindowInfo& showinfo);
 
 	
 	//设置窗口快捷键显示
@@ -34,13 +34,26 @@ public:
 	bool SetKeyQuick();
 	//将窗口快捷键转换为 键值顺序
 	std::vector<int> GetkeyList(CHotKeyCtrl&);
-	afx_msg void OnEnChangeEdit1();
-	HookHandler* hook;
-	CEdit M100_EDIT;
+	
+	MainWindowInfo *info;
+
+
+	CHotKeyCtrl HOTKEY1;
 	CHotKeyCtrl HOTKEY2;
 	CHotKeyCtrl HOTKEY3;
 	CHotKeyCtrl HOTKEY4;
 	CHotKeyCtrl HOTKEY5;
 	CHotKeyCtrl HOTKEY6;
 	CHotKeyCtrl HOTKEY7;
+	CHotKeyCtrl HOTKEY8;
+
+	CComboBox CComboBox_List;
+	
+	CEdit EDIT;
+	afx_msg void OnCbnSelchangeCombo1();
+	afx_msg void OnEnKillfocusEdit1();
+	afx_msg void OnBnClickedButton1();
+	afx_msg void OnBnClickedButton2();
+
+	CEdit EDIT2;
 };
