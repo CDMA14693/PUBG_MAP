@@ -68,7 +68,7 @@ MainWindow::MainWindow()
         std::cout<<"配置文件加载失败,使用默认配置"<< std::endl;
         info.BackGround = { 10, 10, 200, 100 };
 
-        info.QuickKey[1] = { 0xA2 , 0x4D };
+        info.QuickKey[1] = { 0xA2 ,0x47 };
         info.QuickKey[2] = { 0x31,0x01 };
         info.QuickKey[3] = { 0x32,0x01 };
         info.QuickKey[4] = { 0x60 };
@@ -377,7 +377,7 @@ void MainWindow::messageProc(int message, LPARAM lpramr)
     break;
     case 6:
     {
-        if (Map_open)
+        if (DrawPoint)
         {
             pointList.at(0).x = WindowSize.right / 2;
             pointList.at(0).y = WindowSize.bottom / 2;
@@ -387,10 +387,10 @@ void MainWindow::messageProc(int message, LPARAM lpramr)
         break;
     case 7:
     {
-        if (Map_open)
+        if (DrawPoint)
         {
             pointList.at(1).x = WindowSize.right / 2;
-            pointList.at(2).y = WindowSize.bottom / 2;
+            pointList.at(1).y = WindowSize.bottom / 2;
         }
         
     }
@@ -464,7 +464,7 @@ const void MainWindow::Draw(HDC & hdc)
     str3 += std::to_wstring(Map_Size);
     str4 += std::to_wstring(info.POINT_100M[Map_Size]);
     str5 += std::to_wstring((int)(std::sqrt(std::pow(pointList[0].x - pointList[1].x, 2) + std::pow(pointList[0].y - pointList[1].y, 2))));
-    str6 += std::to_wstring((int)(std::sqrt(std::pow(pointList[0].x - pointList[1].x, 2) + std::pow(pointList[0].y - pointList[1].y, 2)) * ((double)100 / info.POINT_100M[0])));
+    str6 += std::to_wstring((int)(std::sqrt(std::pow(pointList[0].x - pointList[1].x, 2) + std::pow(pointList[0].y - pointList[1].y, 2)) * ((double)100 / info.POINT_100M[Map_Size])));
     TextOut(hdc, info.BackGround.left, info.BackGround.top, str1.c_str(), str1.length());
     TextOut(hdc, info.BackGround.left, info.BackGround.top+15, str2.c_str(), str2.length());
 
