@@ -461,7 +461,7 @@ const void MainWindow::Draw(HDC & hdc)
     std::wstring str4 = L"地图100米像素数量： ";
     std::wstring str5 = L"2点之间像素数量： ";
     std::wstring str6 = L"游戏内距离： ";
-    str3 += std::to_wstring(Map_Size+1);
+    str3 += std::to_wstring(Map_Size);
     str4 += std::to_wstring(info.POINT_100M[Map_Size]);
     str5 += std::to_wstring((int)(std::sqrt(std::pow(pointList[0].x - pointList[1].x, 2) + std::pow(pointList[0].y - pointList[1].y, 2))));
     str6 += std::to_wstring((int)(std::sqrt(std::pow(pointList[0].x - pointList[1].x, 2) + std::pow(pointList[0].y - pointList[1].y, 2)) * ((double)100 / info.POINT_100M[0])));
