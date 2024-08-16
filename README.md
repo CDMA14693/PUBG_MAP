@@ -18,8 +18,10 @@ https://www.bilibili.com/video/BV1nKYueiEhY
 ![image](https://github.com/user-attachments/assets/a95084b8-4a38-423b-8156-8540bd76afb1)  
 进入设置
 ## 快捷键设置菜单 与 功能显示菜单
-![image](https://github.com/user-attachments/assets/ab21ab8b-4e42-4cac-8bda-2183a23cb52b)  
-![image](https://github.com/user-attachments/assets/a30f5fe6-3026-49f2-aeb8-89462dd0fade)  
+![image](https://github.com/user-attachments/assets/f9c5344f-e28b-4c96-87a5-c545cb377c0b)
+
+![image](https://github.com/user-attachments/assets/9122fd08-2e0d-4f4f-a905-712e99a02ca4)
+
 渲染标记点可以让软件在绘图空间内进行标点显示,关闭状态下,标点功能不会启用
 ### 功能分别是
 标记点渲染 的开启与关闭 && 功能显示菜单中 功能状态  开启与关闭  
