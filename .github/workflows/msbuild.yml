@@ -1,7 +1,4 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
+# 该工作流程使用 GitHub Actions 在 Windows 环境下构建你的项目
 
 name: MSBuild
 
@@ -12,12 +9,10 @@ on:
     branches: [ "main" ]
 
 env:
-  # Path to the solution file relative to the root of the project.
+  # 解决方案文件的路径，默认指向项目根目录
   SOLUTION_FILE_PATH: .
 
-  # Configuration type to build.
-  # You can convert this to a build matrix if you need coverage of multiple configuration types.
-  # https://docs.github.com/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+  # 构建配置类型，例如 Release 或 Debug
   BUILD_CONFIGURATION: Release
 
 permissions:
@@ -28,17 +23,20 @@ jobs:
     runs-on: windows-latest
 
     steps:
+    # 从仓库中检出代码
     - uses: actions/checkout@v4
 
+    # 将 MSBuild 添加到 PATH 环境变量中
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
 
+    # 恢复 NuGet 包
     - name: Restore NuGet packages
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: nuget restore ${{env.SOLUTION_FILE_PATH}}
 
+    # 构建解决方案
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      # Add additional options to the MSBuild command line here (like platform or verbosity level).
-      # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
-      run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} ${{env.SOLUTION_FILE_PATH}}
+      # 使用 MSBuild 构建解决方案，并添加 _AFXDLL 预处理器定义
+      run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} /p:PreprocessorDefinitions="_AFXDLL" ${{env.SOLUTION_FILE_PATH}}
