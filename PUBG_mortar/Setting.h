@@ -9,9 +9,11 @@ class Setting : public CDialogEx
 	DECLARE_DYNAMIC(Setting)
 
 public:
-	Setting(CWnd* pParent = nullptr);   // 标准构造函数
+	static Setting& Getsetting();
+	
 	virtual ~Setting();
-
+private:
+	Setting(CWnd* pParent = nullptr);   // 标准构造函数
 // 对话框数据
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_DIALOG1 };
@@ -50,10 +52,19 @@ public:
 	CComboBox CComboBox_List;
 	
 	CEdit EDIT;
+	CEdit EDIT2;
+	CEdit EDIT_X;
+	CEdit EDIT_Y;
+	CEdit EDIT_BOTTOM;
+	CEdit EDIT_RIGHT;
+
 	afx_msg void OnCbnSelchangeCombo1();
 	afx_msg void OnEnKillfocusEdit1();
 	afx_msg void OnBnClickedButton1();
 	afx_msg void OnBnClickedButton2();
-
-	CEdit EDIT2;
+	afx_msg void OnEnKillfocusEdit4();
+	afx_msg void OnEnKillfocusEdit5();
+	afx_msg void OnEnKillfocusEdit6();
+	afx_msg void OnEnKillfocusEdit7();
+	afx_msg void OnBnClickedCancel();
 };

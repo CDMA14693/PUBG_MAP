@@ -15,6 +15,7 @@ MainWindowInfo MainWindow::info;
 int MainWindow::Map_Size = 0;
 HINSTANCE MainWindow::hinstance;
 
+
 std::string GetExecutableDirectory() {
     char buffer[MAX_PATH];
     GetModuleFileNameA(nullptr, buffer, MAX_PATH);
@@ -66,7 +67,7 @@ MainWindow::MainWindow()
     if (!LoadConfigurationBinary("config.dat"))
     {   
         std::cout<<"配置文件加载失败,使用默认配置"<< std::endl;
-        info.BackGround = { 10, 10, 200, 100 };
+        info.BackGround = { 0, 20, 220, 150 };
 
         info.QuickKey[1] = { 0xA2 ,0x47 };
         info.QuickKey[2] = { 0x31,0x01 };
@@ -206,6 +207,9 @@ void MainWindow::SaveConfigurationBinary(const std::string& filename)
         return;
     }
 
+    MainWindow& m = MainWindow::GteWindow();
+    m.updataDraw();
+
     try {
         // Write POINT_100M vector
         uint32_t pointSize = static_cast<uint32_t>(info.POINT_100M.size());
@@ -291,9 +295,11 @@ LRESULT MainWindow::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         {
         case ID_SETTING:
         {
-            Setting s;
+            Setting& s = Setting::Getsetting();
             s.Setinfo(info);
-            s.DoModal();
+            s.ShowWindow(SW_SHOW);
+            s.BringWindowToTop();
+
         } 
             break;
         case ID_EXIT:
@@ -429,49 +435,84 @@ const void MainWindow::Draw(HDC & hdc)
         HBRUSH brushGreen = CreateSolidBrush(RGB(0, 255, 0));
         SelectObject(hdc, brushGreen);
         Ellipse(hdc, pointList[0].x - info.PointSize, pointList[0].y - info.PointSize, pointList[0].x + info.PointSize, pointList[0].y + info.PointSize);
+
         // 创建红色画刷并绘制第二个点
         HBRUSH brushRed = CreateSolidBrush(RGB(255, 0, 0));
         SelectObject(hdc, brushRed);
-        Ellipse(hdc,pointList[1].x - info.PointSize, pointList[1].y - info.PointSize, pointList[1].x + info.PointSize, pointList[1].y + info.PointSize);
+        Ellipse(hdc, pointList[1].x - info.PointSize, pointList[1].y - info.PointSize, pointList[1].x + info.PointSize, pointList[1].y + info.PointSize);
+
         // 删除画刷对象
         DeleteObject(brushGreen);
         DeleteObject(brushRed);
     }
+
+    // 绘制背景
     HBRUSH brushRed = CreateSolidBrush(RGB(255, 0, 255));
-    FillRect(hdc,&info.BackGround , brushRed);
-
-    std::wstring str1 = L"功能状态： ";
-    if (DrawPoint)
-    {
-        str1 += L"开启";
-    }
-    else {
-        str1 += L"关闭";
-    }
-    
-    std::wstring str2 = L"软件认为地图状态: ";
-    if (Map_open)
-    {
-        str2 += L"开启";
-    }
-    else {
-        str2 += L"关闭";
-    }
-    std::wstring str3 = L"软件认为地图缩放次数: ";
-    std::wstring str4 = L"地图100米像素数量： ";
-    std::wstring str5 = L"2点之间像素数量： ";
-    std::wstring str6 = L"游戏内距离： ";
-    str3 += std::to_wstring(Map_Size);
-    str4 += std::to_wstring(info.POINT_100M[Map_Size]);
-    str5 += std::to_wstring((int)(std::sqrt(std::pow(pointList[0].x - pointList[1].x, 2) + std::pow(pointList[0].y - pointList[1].y, 2))));
-    str6 += std::to_wstring((int)(std::sqrt(std::pow(pointList[0].x - pointList[1].x, 2) + std::pow(pointList[0].y - pointList[1].y, 2)) * ((double)100 / info.POINT_100M[Map_Size])));
-    TextOut(hdc, info.BackGround.left, info.BackGround.top, str1.c_str(), str1.length());
-    TextOut(hdc, info.BackGround.left, info.BackGround.top+15, str2.c_str(), str2.length());
-
-    TextOut(hdc, info.BackGround.left, info.BackGround.top + 30, str3.c_str(), str3.length());
-    TextOut(hdc, info.BackGround.left, info.BackGround.top + 45, str4.c_str(), str4.length());
-    TextOut(hdc, info.BackGround.left, info.BackGround.top + 60, str5.c_str(), str5.length());
-    TextOut(hdc, info.BackGround.left, info.BackGround.top+75, str6.c_str(), str6.length());
-    
+    FillRect(hdc, &info.BackGround, brushRed);
     DeleteObject(brushRed);
+
+    // 设置字体大小和其他样式
+    int fontHeight = 20; // 字体高度，单位：像素
+    HFONT hFont = CreateFontW(
+        fontHeight,                // 字符高度
+        0,                         // 字符宽度（0 表示自动选择）
+        0,                         // 转义角度
+        0,                         // 方向角度
+        FW_NORMAL,                  // 字体粗细（正常）
+        FALSE,                      // 斜体
+        FALSE,                      // 下划线
+        FALSE,                      // 删除线
+        DEFAULT_CHARSET,            // 字符集
+        OUT_DEFAULT_PRECIS,         // 输出精度
+        CLIP_DEFAULT_PRECIS,        // 剪裁精度
+        DEFAULT_QUALITY,            // 输出质量
+        DEFAULT_PITCH | FF_SWISS,   // 间距和字体系列
+        L"Arial"                    // 字体名称
+    );
+
+    // 选择字体到设备上下文
+    HFONT hOldFont = (HFONT)SelectObject(hdc, hFont);
+
+    // 准备绘制文本
+    std::wstring str1 = L"功能状态： ";
+    str1 += (DrawPoint) ? L"开启" : L"关闭";
+
+    std::wstring str2 = L"软件认为地图状态: ";
+    str2 += (Map_open) ? L"开启" : L"关闭";
+
+    std::wstring str3 = L"软件认为地图缩放次数: " + std::to_wstring(Map_Size);
+    std::wstring str4 = L"地图100米像素数量： " + std::to_wstring(info.POINT_100M[Map_Size]);
+    std::wstring str5 = L"2点之间像素数量： " + std::to_wstring((int)(std::sqrt(std::pow(pointList[0].x - pointList[1].x, 2) + std::pow(pointList[0].y - pointList[1].y, 2))));
+    std::wstring str6 = L"游戏内距离： " + std::to_wstring((int)(std::sqrt(std::pow(pointList[0].x - pointList[1].x, 2) + std::pow(pointList[0].y - pointList[1].y, 2)) * ((double)100 / info.POINT_100M[Map_Size])));
+
+    
+    // 设置文本格式
+    DRAWTEXTPARAMS dtp;
+    ZeroMemory(&dtp, sizeof(DRAWTEXTPARAMS));
+    dtp.cbSize = sizeof(DRAWTEXTPARAMS);
+    dtp.iTabLength = 4; // 可以根据需要调整制表位
+    dtp.iLeftMargin = 0; // 左边距
+    dtp.iRightMargin = 0; // 右边距
+    
+    RECT textRect = info.BackGround;
+    textRect.left += 5;  // 加点内边距
+    textRect.top += 5;
+
+    // 绘制文本
+    DrawTextExW(hdc, const_cast<LPWSTR>(str1.c_str()), -1, &textRect, DT_LEFT | DT_WORDBREAK, &dtp);
+    textRect.top += 20;
+    DrawTextExW(hdc, const_cast<LPWSTR>(str2.c_str()), -1, &textRect, DT_LEFT | DT_WORDBREAK, &dtp);
+    textRect.top += 20;
+    DrawTextExW(hdc, const_cast<LPWSTR>(str3.c_str()), -1, &textRect, DT_LEFT | DT_WORDBREAK, &dtp);
+    textRect.top += 20;
+    DrawTextExW(hdc, const_cast<LPWSTR>(str4.c_str()), -1, &textRect, DT_LEFT | DT_WORDBREAK, &dtp);
+    textRect.top += 20;
+    DrawTextExW(hdc, const_cast<LPWSTR>(str5.c_str()), -1, &textRect, DT_LEFT | DT_WORDBREAK, &dtp);
+    textRect.top += 20;
+    DrawTextExW(hdc, const_cast<LPWSTR>(str6.c_str()), -1, &textRect, DT_LEFT | DT_WORDBREAK, &dtp);
+
+
+    // 恢复旧的字体
+    SelectObject(hdc, hOldFont);
+    DeleteObject(hFont);
 }

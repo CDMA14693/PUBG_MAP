@@ -12,10 +12,20 @@
 IMPLEMENT_DYNAMIC(Setting, CDialogEx)
 
 
+Setting& Setting::Getsetting()
+{
+	static Setting s;
+	return s;
+}
+
 Setting::Setting(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_DIALOG1, pParent)
 {
-
+	if (!Create(IDD_DIALOG1, pParent))
+	{
+		AfxMessageBox(_T("Failed to create the settings dialog."));
+	}
+	info = { 0 };
 }
 
 Setting::~Setting()
@@ -40,36 +50,11 @@ void Setting::DoDataExchange(CDataExchange* pDX)
 
 	DDX_Control(pDX, IDC_EDIT1, EDIT);
 	DDX_Control(pDX, IDC_EDIT2, EDIT2);
-	//设置快捷键显示
-	if (info != NULL)
-	{
-		SetKeyShow(HOTKEY1, info->QuickKey[1]);
-		std::vector<int>list = info->QuickKey[2];
-		list.pop_back();
-		SetKeyShow(HOTKEY2, list);
-		list = info->QuickKey[3];
-		list.pop_back();
-		SetKeyShow(HOTKEY3, list);
-		SetKeyShow(HOTKEY4, info->QuickKey[4]);
-		SetKeyShow(HOTKEY5, info->QuickKey[5]);
-		SetKeyShow(HOTKEY6, info->QuickKey[6]);
-		SetKeyShow(HOTKEY7, info->QuickKey[7]);
-		SetKeyShow(HOTKEY8, info->QuickKey[8]);
 
-		for (int x = 0; x<info->POINT_100M.size(); x++)
-		{
-			if (x == 0)
-				CComboBox_List.SetCurSel(0);
-			std::wstring str = L"放大";
-			str += std::to_wstring(x);
-			str += L"次";
-			CComboBox_List.AddString(str.c_str());
-		}
-		
-		EDIT2.SetWindowTextW(std::to_wstring(info->PointSize).c_str());
-
-	}
-
+	DDX_Control(pDX, IDC_EDIT4, EDIT_X);
+	DDX_Control(pDX, IDC_EDIT5, EDIT_Y);
+	DDX_Control(pDX, IDC_EDIT6, EDIT_BOTTOM);
+	DDX_Control(pDX, IDC_EDIT7, EDIT_RIGHT);
 
 	
 }
@@ -83,6 +68,11 @@ BEGIN_MESSAGE_MAP(Setting, CDialogEx)
 	ON_EN_KILLFOCUS(IDC_EDIT1, &Setting::OnEnKillfocusEdit1)
 	ON_BN_CLICKED(IDC_BUTTON1, &Setting::OnBnClickedButton1)
 	ON_BN_CLICKED(IDC_BUTTON2, &Setting::OnBnClickedButton2)
+	ON_EN_KILLFOCUS(IDC_EDIT4, &Setting::OnEnKillfocusEdit4)
+	ON_EN_KILLFOCUS(IDC_EDIT5, &Setting::OnEnKillfocusEdit5)
+	ON_EN_KILLFOCUS(IDC_EDIT6, &Setting::OnEnKillfocusEdit6)
+	ON_EN_KILLFOCUS(IDC_EDIT7, &Setting::OnEnKillfocusEdit7)
+	ON_BN_CLICKED(IDCANCEL, &Setting::OnBnClickedCancel)
 END_MESSAGE_MAP()
 
 
@@ -108,6 +98,45 @@ void Setting::Setinfo(MainWindowInfo &showinfo)
 	if (info->QuickKey.empty())
 	{
 		return;
+	}
+
+	//设置快捷键显示
+	if (info != NULL)
+	{
+		SetKeyShow(HOTKEY1, info->QuickKey[1]);
+		std::vector<int>list = info->QuickKey[2];
+		list.pop_back();
+		SetKeyShow(HOTKEY2, list);
+		list = info->QuickKey[3];
+		list.pop_back();
+		SetKeyShow(HOTKEY3, list);
+		SetKeyShow(HOTKEY4, info->QuickKey[4]);
+		SetKeyShow(HOTKEY5, info->QuickKey[5]);
+		SetKeyShow(HOTKEY6, info->QuickKey[6]);
+		SetKeyShow(HOTKEY7, info->QuickKey[7]);
+		SetKeyShow(HOTKEY8, info->QuickKey[8]);
+
+		for (int x = 0; x < info->POINT_100M.size(); x++)
+		{
+			if (x == 0)
+				CComboBox_List.SetCurSel(0);
+			std::wstring str = L"放大";
+			str += std::to_wstring(x);
+			str += L"次";
+			CComboBox_List.AddString(str.c_str());
+		}
+
+		EDIT2.SetWindowTextW(std::to_wstring(info->PointSize).c_str());
+
+		// 计算高度和宽度
+		int height = info->BackGround.bottom - info->BackGround.top;
+		int width = info->BackGround.right - info->BackGround.left;
+
+		// 设置输入框的文本
+		EDIT_X.SetWindowTextW(std::to_wstring(info->BackGround.left).c_str());
+		EDIT_Y.SetWindowTextW(std::to_wstring(info->BackGround.top).c_str());
+		EDIT_BOTTOM.SetWindowTextW(std::to_wstring(height).c_str());
+		EDIT_RIGHT.SetWindowTextW(std::to_wstring(width).c_str());
 	}
 }
 
@@ -232,4 +261,56 @@ void Setting::OnBnClickedButton2()
 		}
 		
 	}
+}
+
+
+void Setting::OnEnKillfocusEdit4()
+{
+	CString str;
+	EDIT_X.GetWindowTextW(str);
+	info->BackGround.left = _ttoi(str);
+
+	EDIT_RIGHT.GetWindowTextW(str);
+	int width = _ttoi(str);
+
+	info->BackGround.right = info->BackGround.left+ width;
+}
+
+void Setting::OnEnKillfocusEdit5()
+{
+	CString str;
+	EDIT_Y.GetWindowTextW(str);
+	info->BackGround.top = _ttoi(str);
+
+	EDIT_BOTTOM.GetWindowTextW(str);
+	int height = _ttoi(str);
+	info->BackGround.bottom = info->BackGround.top + height;
+}
+
+void Setting::OnEnKillfocusEdit6()
+{
+	CString str;
+	EDIT_BOTTOM.GetWindowTextW(str);
+	int height = _ttoi(str);
+
+	// 计算 Bottom 值，假设你已经有了 Left 和 Top 的值
+	info->BackGround.bottom = info->BackGround.top + height;
+}
+
+void Setting::OnEnKillfocusEdit7()
+{
+	CString str;
+	EDIT_RIGHT.GetWindowTextW(str);
+	int width = _ttoi(str);
+
+	// 计算 Right 值，假设你已经有了 Left 和 Top 的值
+	info->BackGround.right = info->BackGround.left + width;
+}
+
+
+void Setting::OnBnClickedCancel()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	CDialogEx::OnCancel();
+	ShowWindow(SW_HIDE);
 }

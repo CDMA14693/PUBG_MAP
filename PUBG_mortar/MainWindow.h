@@ -27,6 +27,8 @@ public:
 	static RECT WindowSize;
 	static bool DrawPoint;
 	static bool Map_open;
+	
+
 
 	//¼ÓÔØÅäÖÃÎÄ¼ş£¬
 	bool LoadConfigurationBinary(const std::string& filename);
