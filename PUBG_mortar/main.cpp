@@ -18,13 +18,13 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     }
 
 
-    /*AllocConsole();
+#ifdef _DEBUG
+    AllocConsole();
     FILE* stream;
     freopen_s(&stream, "CONOUT$", "w", stdout);
     freopen_s(&stream, "CONOUT$", "w", stderr);
-    std::cout << "Hello, console!\n " << std::endl;*/
-
-
+    std::cout << "Hello, console!\n " << std::endl;
+#endif
     
     MainWindow& m = MainWindow::GteWindow();
     m.SetHinstance(hInstance);

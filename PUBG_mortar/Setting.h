@@ -44,7 +44,7 @@ public:
 	CHotKeyCtrl HOTKEY2;
 	CHotKeyCtrl HOTKEY3;
 	CHotKeyCtrl HOTKEY4;
-	CHotKeyCtrl HOTKEY5;
+	//CHotKeyCtrl HOTKEY5;
 	CHotKeyCtrl HOTKEY6;
 	CHotKeyCtrl HOTKEY7;
 	CHotKeyCtrl HOTKEY8;
@@ -67,4 +67,6 @@ public:
 	afx_msg void OnEnKillfocusEdit6();
 	afx_msg void OnEnKillfocusEdit7();
 	afx_msg void OnBnClickedCancel();
+private:
+	CButton Chcke1;
 };

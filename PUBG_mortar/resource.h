@@ -8,7 +8,6 @@
 #define IDC_HOTKEY1                     1001
 #define IDC_HOTKEY2                     1005
 #define IDC_HOTKEY3                     1006
-#define IDC_HOTKEY5                     1008
 #define IDC_HOTKEY6                     1009
 #define IDC_HOTKEY7                     1010
 #define IDC_HOTKEY8                     1011
@@ -22,6 +21,7 @@
 #define IDC_EDIT5                       1045
 #define IDC_EDIT6                       1046
 #define IDC_EDIT7                       1047
+#define IDC_CHECK1                      1048
 #define ID_40001                        40001
 #define ID_40002                        40002
 #define ID_EXIT                         40003
@@ -36,7 +36,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        107
 #define _APS_NEXT_COMMAND_VALUE         40008
-#define _APS_NEXT_CONTROL_VALUE         1045
+#define _APS_NEXT_CONTROL_VALUE         1049
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

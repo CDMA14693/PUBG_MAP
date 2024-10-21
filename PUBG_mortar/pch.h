@@ -31,8 +31,10 @@ struct MainWindowInfo
 	std::map<int, std::vector<int>> QuickKey;
 	RECT BackGround;
 	int PointSize;
-
-	MainWindowInfo() : PointSize(10) { BackGround = { 0,0,100,100 }; }
+	BOOL console;
+	MainWindowInfo() : PointSize(10) {
+		BackGround = { 0,0,100,100 }; console = false;
+	}
 };
 
 struct KeyboardRegister {

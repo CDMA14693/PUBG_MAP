@@ -42,7 +42,6 @@ void Setting::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_HOTKEY2, HOTKEY2);
 	DDX_Control(pDX, IDC_HOTKEY3, HOTKEY3);
 	DDX_Control(pDX, IDC_HOTKEY4, HOTKEY4);
-	DDX_Control(pDX, IDC_HOTKEY5, HOTKEY5);
 	DDX_Control(pDX, IDC_HOTKEY6, HOTKEY6);
 	DDX_Control(pDX, IDC_HOTKEY7, HOTKEY7);
 	DDX_Control(pDX, IDC_HOTKEY8, HOTKEY8);
@@ -56,7 +55,8 @@ void Setting::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT6, EDIT_BOTTOM);
 	DDX_Control(pDX, IDC_EDIT7, EDIT_RIGHT);
 
-	
+
+	DDX_Control(pDX, IDC_CHECK1, Chcke1);
 }
 
 
@@ -111,7 +111,7 @@ void Setting::Setinfo(MainWindowInfo &showinfo)
 		list.pop_back();
 		SetKeyShow(HOTKEY3, list);
 		SetKeyShow(HOTKEY4, info->QuickKey[4]);
-		SetKeyShow(HOTKEY5, info->QuickKey[5]);
+		//SetKeyShow(HOTKEY5, info->QuickKey[5]);
 		SetKeyShow(HOTKEY6, info->QuickKey[6]);
 		SetKeyShow(HOTKEY7, info->QuickKey[7]);
 		SetKeyShow(HOTKEY8, info->QuickKey[8]);
@@ -137,6 +137,11 @@ void Setting::Setinfo(MainWindowInfo &showinfo)
 		EDIT_Y.SetWindowTextW(std::to_wstring(info->BackGround.top).c_str());
 		EDIT_BOTTOM.SetWindowTextW(std::to_wstring(height).c_str());
 		EDIT_RIGHT.SetWindowTextW(std::to_wstring(width).c_str());
+		if (info->console)
+			Chcke1.SetCheck(BST_CHECKED);
+		else
+			Chcke1.SetCheck(BST_UNCHECKED);
+		
 	}
 }
 
@@ -187,11 +192,16 @@ bool Setting::SetKeyQuick()
 	list.push_back(0x01);
 	info->QuickKey[3] = list;
 	info->QuickKey[4] = GetkeyList(HOTKEY4);
-	info->QuickKey[5] = GetkeyList(HOTKEY5);
+	//info->QuickKey[5] = GetkeyList(HOTKEY5);
 	info->QuickKey[6] = GetkeyList(HOTKEY6);
 	info->QuickKey[7] = GetkeyList(HOTKEY7);
 	info->QuickKey[8] = GetkeyList(HOTKEY8);
-
+	if (Chcke1.GetCheck()== BST_UNCHECKED) {
+		info->console = false;
+	}
+	else {
+		info->console = true;
+	}
 	return false;
 }
 

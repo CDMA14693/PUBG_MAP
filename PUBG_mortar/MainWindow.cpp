@@ -88,9 +88,18 @@ MainWindow::MainWindow()
         info.POINT_100M.push_back(500);
 
         info.PointSize = 5;
+
+        info.console = false;
     }
     HookHandler &h= HookHandler::GetHookHandler();
     it= h.RegisterKeyboard(messageProc, info.QuickKey);
+    /*if (info.console) {
+        AllocConsole();
+        FILE* stream;
+        freopen_s(&stream, "CONOUT$", "w", stdout);
+        freopen_s(&stream, "CONOUT$", "w", stderr);
+        std::cout << "Hello, console!\n " << std::endl;
+    }*/
 }
 //创建窗口
 HWND MainWindow::CreateMyWindow() const
@@ -164,6 +173,9 @@ bool MainWindow::LoadConfigurationBinary(const std::string& filename)
         // Read PointSize
         file.read(reinterpret_cast<char*>(&info.PointSize), sizeof(info.PointSize));
 
+        // **Read console flag**
+        file.read(reinterpret_cast<char*>(&info.console), sizeof(info.console));
+
         // Read QuickKey size
         uint32_t quickKeySize;
         file.read(reinterpret_cast<char*>(&quickKeySize), sizeof(quickKeySize));
@@ -223,6 +235,9 @@ void MainWindow::SaveConfigurationBinary(const std::string& filename)
 
         // Write PointSize
         file.write(reinterpret_cast<const char*>(&info.PointSize), sizeof(info.PointSize));
+
+        // **Write console flag**
+        file.write(reinterpret_cast<const char*>(&info.console), sizeof(info.console));
 
         // Write QuickKey size
         uint32_t quickKeySize = static_cast<uint32_t>(info.QuickKey.size());
@@ -361,7 +376,7 @@ void MainWindow::messageProc(int message, LPARAM lpramr)
     
     case 2:
     {
-        if (DrawPoint)
+        if (Map_open)
         {
             pointList.at(0) = mouse->pt;
         }
@@ -370,7 +385,7 @@ void MainWindow::messageProc(int message, LPARAM lpramr)
         break;
     case 3:
     {
-        if (DrawPoint)
+        if (Map_open)
         {
             pointList.at(1) = mouse->pt;
         }
@@ -383,7 +398,7 @@ void MainWindow::messageProc(int message, LPARAM lpramr)
     break;
     case 6:
     {
-        if (DrawPoint)
+        if (Map_open)
         {
             pointList.at(0).x = WindowSize.right / 2;
             pointList.at(0).y = WindowSize.bottom / 2;
@@ -393,7 +408,7 @@ void MainWindow::messageProc(int message, LPARAM lpramr)
         break;
     case 7:
     {
-        if (DrawPoint)
+        if (Map_open)
         {
             pointList.at(1).x = WindowSize.right / 2;
             pointList.at(1).y = WindowSize.bottom / 2;
@@ -424,13 +439,12 @@ void MainWindow::messageProc(int message, LPARAM lpramr)
 
     }
     }
-    MainWindow& m=MainWindow::GteWindow();
-    m.updataDraw();
+    MainWindow::GteWindow().updataDraw();
 }
 
 const void MainWindow::Draw(HDC & hdc)
 {
-    if (DrawPoint)
+    if (Map_open)
     {
         HBRUSH brushGreen = CreateSolidBrush(RGB(0, 255, 0));
         SelectObject(hdc, brushGreen);
@@ -475,11 +489,7 @@ const void MainWindow::Draw(HDC & hdc)
 
     // 准备绘制文本
     std::wstring str1 = L"功能状态： ";
-    str1 += (DrawPoint) ? L"开启" : L"关闭";
-
-    std::wstring str2 = L"软件认为地图状态: ";
-    str2 += (Map_open) ? L"开启" : L"关闭";
-
+    str1 += (Map_open) ? L"开启" : L"关闭";
     std::wstring str3 = L"软件认为地图缩放次数: " + std::to_wstring(Map_Size);
     std::wstring str4 = L"地图100米像素数量： " + std::to_wstring(info.POINT_100M[Map_Size]);
     std::wstring str5 = L"2点之间像素数量： " + std::to_wstring((int)(std::sqrt(std::pow(pointList[0].x - pointList[1].x, 2) + std::pow(pointList[0].y - pointList[1].y, 2))));
@@ -500,8 +510,6 @@ const void MainWindow::Draw(HDC & hdc)
 
     // 绘制文本
     DrawTextExW(hdc, const_cast<LPWSTR>(str1.c_str()), -1, &textRect, DT_LEFT | DT_WORDBREAK, &dtp);
-    textRect.top += 20;
-    DrawTextExW(hdc, const_cast<LPWSTR>(str2.c_str()), -1, &textRect, DT_LEFT | DT_WORDBREAK, &dtp);
     textRect.top += 20;
     DrawTextExW(hdc, const_cast<LPWSTR>(str3.c_str()), -1, &textRect, DT_LEFT | DT_WORDBREAK, &dtp);
     textRect.top += 20;
